@@ -4,12 +4,17 @@ const {GraphQLObjectType,
     GraphQLInt,
     GraphQLSchema
 } = graphql;
-const _ = require('lodash');
 
-const user = [
-    {id: '23', firstName:'Bill', age: 20},
-    {id: '47', firstName:'Samantha', age: 21}
-]
+const axios = require('axios');
+
+const CompanyType = new GraphQLObjectType({
+    name: "Company",
+    fields:{
+        id: { type: GraphQLString},
+        name: { type: GraphQLString},
+        description: { type: GraphQLString}
+    }
+});
 
 
 const UserType = new GraphQLObjectType({
@@ -17,12 +22,18 @@ const UserType = new GraphQLObjectType({
     fields:{
         id: { type: GraphQLString},
         firstName: { type: GraphQLString},
-        age: { type: GraphQLInt}
+        age: { type: GraphQLInt},
+        company:{
+            type: CompanyType,
+            resolve(parentValue, args){
+                 return axios.get(`http://localhost:3000/companies/${parentValue.companyId}`)
+                 .then(response => response.data);
+            }
+        }
     }
 });
 
-//Given the id, the UserType is returned
-//Resolve: actually get the real data from DB. args: the id passed earlier
+
 const RootQuery = new GraphQLObjectType({
     name: 'RootQueryType',
     fields:{
@@ -30,7 +41,8 @@ const RootQuery = new GraphQLObjectType({
             type: UserType,
             args: {id: {type: GraphQLString}},
             resolve(parentValue, args){
-                return _.find(user, {id: args.id});
+                return axios.get(`http://localhost:3000/users/${args.id}`)
+                .then(response => response.data);
             }
         }
     }
